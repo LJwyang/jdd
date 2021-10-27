@@ -12,6 +12,7 @@ update_task.sh
 passerby-b.boxjs.json
 crontab.list
 
+jd_disable.py
 jd_dreamFactory2.js
 jd_selectionOfficer.js
 jd_cfd2.js

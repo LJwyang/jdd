@@ -27,7 +27,7 @@ ql repo https://github.com/gys619/jdd.git "jd_|jx_|jddj_|gua_|jddj_|getJDCookie|
     cd repo
     rm -rf gys619_jdd
     ```
-* 觉得重复任务多的，可以用jd_disable.py禁用重复任务
+
 * 加了[Oreomeow大佬](https://raw.githubusercontent.com/Oreomeow/VIP/main/Conf/Qinglong/config.sample.sh)的config模板,名字是jd_config.sample.sh
 * 财富岛新手任务开木板
   * 修改青龙配置文件,如下,加个ts
