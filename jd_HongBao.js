@@ -55,7 +55,6 @@ async function main() {
     $.UA = `jdapp;iPhone;10.2.0;13.1.2;${randomString(40)};M/5.0;network/wifi;ADID/;model/iPhone8,1;addressid/2308460622;appBuild/167853;jdSupportDarkMode/0;Mozilla/5.0 (iPhone; CPU iPhone OS 13_1_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1;`
     $.max = false;
     $.hotFlag = false;
-    const flCodeArr = [];
     const flCode = $.isNode() ? (process.env.FLCODE ? process.env.FLCODE : flCodeArr[Math.floor((Math.random() * flCodeArr.length))]) : flCodeArr[Math.floor((Math.random() * flCodeArr.length))];
     $.code = flCode;
     for (let i = 0; i < 10 && !$.max; i++) {
@@ -113,8 +112,8 @@ function mainInfo() {
                     let res = $.toObj(data, data);
                     if (typeof res == 'object') {
                         if (res.code == 0 && res.data && res.data.shareUrl) {
-                            $.shareCode = res.data.shareUrl.match(/\?s=([^&]+)/) && res.data.shareUrl.match(/\?s=([^&]+)/)[1] || ''
-                            console.log('助力码:'+$.shareCode)
+                            $.shareCode = res.data.shareUrl.match(/$.code\?s=([^&]+)/) && res.data.shareUrl.match(/$.code\?s=([^&]+)/)[1] || ''
+                            console.log('助力码:' + $.shareCode)
                         }
                     } else {
                         console.log(data)
