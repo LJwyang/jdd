@@ -1,9 +1,9 @@
 /*
 双十一无门槛红包
-cron 0,30 0,12,19 jd_redEnvelope.js
-添加环境变量FLCODE 如需自己吃返利，请填写该变量（https://u.jd.com/后面的英文）
+0 0,12,18,20 * * * jd_redEnvelope.js
+添加环境变量FLCODE 如需自己返利，请填写该变量（https://u.jd.com/后面的英文）
 */
-const $ = new Env("抢双11无门槛红包");
+const $ = new Env("京享红包");
 const jdCookieNode = $.isNode() ? require("./jdCookie.js") : "";
 let cookiesArr = [];
 if ($.isNode()) {
@@ -13,54 +13,28 @@ if ($.isNode()) {
   if (process.env.JD_DEBUG && process.env.JD_DEBUG === "false")
     console.log = () => {};
 } else {
-  cookiesArr = [
-    $.getdata("CookieJD"),
-    $.getdata("CookieJD2"),
-    ...$.toObj($.getdata("CookiesJD") || "[]").map((item) => item.cookie),
-  ].filter((item) => !!item);
+  cookiesArr = [$.getdata("CookieJD"), $.getdata("CookieJD2"), ...$.toObj($.getdata("CookiesJD") || "[]").map((item) => item.cookie)].filter((item) => !!item);
 }
 let cookie = "";
-$.shareCode = "";
+$.shareCode = "DH50c";
 !(async () => {
   if (!cookiesArr[0]) {
-    $.msg(
-      $.name,
-      "【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取",
-      "https://bean.m.jd.com/bean/signIndex.action",
-      { "open-url": "https://bean.m.jd.com/bean/signIndex.action" }
-    );
+    $.msg($.name, "【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取", "https://bean.m.jd.com/bean/signIndex.action", { "open-url": "https://bean.m.jd.com/bean/signIndex.action" });
     return;
   }
   for (let i = 0; i < cookiesArr.length; i++) {
     if (cookiesArr[i]) {
       cookie = cookiesArr[i];
-      $.UserName = decodeURIComponent(
-        cookie.match(/pt_pin=([^; ]+)(?=;?)/) &&
-          cookie.match(/pt_pin=([^; ]+)(?=;?)/)[1]
-      );
+      $.UserName = decodeURIComponent(cookie.match(/pt_pin=([^; ]+)(?=;?)/) && cookie.match(/pt_pin=([^; ]+)(?=;?)/)[1]);
       $.index = i + 1;
       $.isLogin = true;
       $.nickName = "";
       //await TotalBean();
-      console.log(
-        `\n******开始【京东账号${$.index}】${
-          $.nickName || $.UserName
-        }*********\n`
-      );
+      console.log(`\n******开始【京东账号${$.index}】${$.nickName || $.UserName}*********\n`);
       if (!$.isLogin) {
-        $.msg(
-          $.name,
-          `【提示】cookie已失效`,
-          `京东账号${$.index} ${
-            $.nickName || $.UserName
-          }\n请重新登录获取\nhttps://bean.m.jd.com/bean/signIndex.action`,
-          { "open-url": "https://bean.m.jd.com/bean/signIndex.action" }
-        );
+        $.msg($.name, `【提示】cookie已失效`, `京东账号${$.index} ${$.nickName || $.UserName}\n请重新登录获取\nhttps://bean.m.jd.com/bean/signIndex.action`, {"open-url": "https://bean.m.jd.com/bean/signIndex.action"});
         if ($.isNode()) {
-          await notify.sendNotify(
-            `${$.name}cookie已失效 - ${$.UserName}`,
-            `京东账号${$.index} ${$.UserName}\n请重新登录获取cookie`
-          );
+          await notify.sendNotify(`${$.name}cookie已失效 - ${$.UserName}`, `京东账号${$.index} ${$.UserName}\n请重新登录获取cookie`);
         }
         continue;
       }
@@ -76,21 +50,14 @@ $.shareCode = "";
   });
 
 async function main() {
-  let userName = decodeURIComponent(
-    cookie.match(/pt_pin=(.+?);/) && cookie.match(/pt_pin=(.+?);/)[1]
-  );
-  $.UA = `jdapp;iPhone;10.2.0;13.1.2;${randomString(
-    40
-  )};M/5.0;network/wifi;ADID/;model/iPhone8,1;addressid/2308460622;appBuild/167853;jdSupportDarkMode/0;Mozilla/5.0 (iPhone; CPU iPhone OS 13_1_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1;`;
+  let userName = decodeURIComponent(cookie.match(/pt_pin=(.+?);/) && cookie.match(/pt_pin=(.+?);/)[1]);
+  $.UA = `jdapp;iPhone;10.2.0;13.1.2;${randomString(40)};M/5.0;network/wifi;ADID/;model/iPhone8,1;addressid/2308460622;appBuild/167853;jdSupportDarkMode/0;Mozilla/5.0 (iPhone; CPU iPhone OS 13_1_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1;`;
   $.max = false;
   $.hotFlag = false;
   const flCodeArr = ["3K9D5Kc", "3IVMKm8", "3I9UVcJ", "3IXbyRK", "3wVdViu"];
-  const flCode = $.isNode()
-    ? process.env.FLCODE
-      ? process.env.FLCODE
-      : flCodeArr[Math.floor(Math.random() * flCodeArr.length)]
-    : flCodeArr[Math.floor(Math.random() * flCodeArr.length)];
+  const flCode = $.isNode() ? process.env.FLCODE ? process.env.FLCODE : flCodeArr[Math.floor(Math.random() * flCodeArr.length)] : flCodeArr[Math.floor(Math.random() * flCodeArr.length)];
   $.code = flCode;
+  console.log($.code)
   for (let i = 0; i < 10 && !$.max; i++) {
     $.newCookie = "";
     $.url1 = "";
@@ -108,11 +75,8 @@ async function main() {
       $.hotFlag = true;
       break;
     }
-    $.actId =
-      ($.url2.match(/mall\/active\/([^/]+)\/index\.html/) &&
-        $.url2.match(/mall\/active\/([^/]+)\/index\.html/)[1]) ||
-      "2GdKXzvywVytLvcJTk2K3pLtDEHq";
-    let arr = await getBody($.UA, $.url2);
+    $.actId = ($.url2.match(/mall\/active\/([^/]+)\/index\.html/) && $.url2.match(/mall\/active\/([^/]+)\/index\.html/)[1]) || "2GdKXzvywVytLvcJTk2K3pLtDEHq";
+    let arr = getBody($.UA, $.url2);
     await getEid(arr);
     console.log(`$.actId:` + $.actId);
     if ($.eid) {
@@ -122,31 +86,23 @@ async function main() {
         await getCoupons("");
       }
     }
-    await $.wait(5000);
+    await $.wait(2000);
   }
-  // if ($.index === 1 && !$.hotFlag) {
-  //     await $.wait(2000)
-  //     await mainInfo()
-  // }
+  if ($.index === 1 && !$.hotFlag) {
+      await $.wait(2000)
+      await mainInfo()
+  }
 }
 
 function mainInfo() {
   return new Promise((resolve) => {
     let opts = {
-      url: `https://api.m.jd.com/api?functionId=shareUnionCoupon&appid=u&_=${Date.now()}&loginType=2&body={%22unionActId%22:%2231134%22,%22actId%22:%22${
-        $.actId
-      }%22,%22platform%22:4,%22unionShareId%22:%22${
-        $.shareCode
-      }%22,%22d%22:%22${
-        $.code
-      }%22,%22supportPic%22:2,%22supportLuckyCode%22:0,%22eid%22:%22${
-        $.eid
-      }%22}&client=apple&clientVersion=8.3.6`,
+      url: `https://api.m.jd.com/api?functionId=shareUnionCoupon&appid=u&_=${Date.now()}&loginType=2&body={%22unionActId%22:%2231134%22,%22actId%22:%22${$.actId}%22,%22platform%22:4,%22unionShareId%22:%22${$.shareCode}%22,%22d%22:%22${$.code}%22,%22supportPic%22:2,%22supportLuckyCode%22:0,%22eid%22:%22${$.eid}%22}&client=apple&clientVersion=8.3.6`,
       headers: {
         "Accept-Language": "zh-cn",
         "Accept-Encoding": "gzip, deflate, br",
         Cookie: `${cookie} ${$.newCookie}`,
-        "User-Agent": $.UA,
+        "User-Agent": $.UA
       },
     };
     $.get(opts, async (err, resp, data) => {
@@ -157,10 +113,7 @@ function mainInfo() {
           let res = $.toObj(data, data);
           if (typeof res == "object") {
             if (res.code == 0 && res.data && res.data.shareUrl) {
-              $.shareCode =
-                (res.data.shareUrl.match(/$.code\?s=([^&]+)/) &&
-                  res.data.shareUrl.match(/$.code\?s=([^&]+)/)[1]) ||
-                "";
+              $.shareCode = (res.data.shareUrl.match(/$.code\?s=([^&]+)/) && res.data.shareUrl.match(/$.code\?s=([^&]+)/)[1]) || "";
               console.log("助力码:" + $.shareCode);
             }
           } else {
@@ -207,7 +160,6 @@ function getEid(arr) {
     });
   });
 }
-
 function randomString(e) {
   e = e || 32;
   let t = "abcdef0123456789",
@@ -220,19 +172,13 @@ function randomString(e) {
 async function getCoupons(shareCode) {
   return new Promise((resolve) => {
     let opts = {
-      url: `https://api.m.jd.com/api?functionId=getCoupons&appid=u&_=${Date.now()}&loginType=2&body={%22platform%22:4,%22unionActId%22:%2231134%22,%22actId%22:%22${
-        $.actId
-      }%22,%22d%22:%22${
-        $.code
-      }%22,%22unionShareId%22:%22${shareCode}%22,%22type%22:1,%22eid%22:%22${
-        $.eid
-      }%22}&client=apple&clientVersion=8.3.6&h5st=undefined`,
+      url: `https://api.m.jd.com/api?functionId=getCoupons&appid=u&_=${Date.now()}&loginType=2&body={%22platform%22:4,%22unionActId%22:%2231134%22,%22actId%22:%22${$.actId}%22,%22d%22:%22${$.code}%22,%22unionShareId%22:%22${shareCode}%22,%22type%22:1,%22eid%22:%22${$.eid}%22}&client=apple&clientVersion=8.3.6&h5st=undefined`,
       headers: {
         "Accept-Language": "zh-cn",
         "Accept-Encoding": "gzip, deflate, br",
         Cookie: `${cookie} ${$.newCookie}`,
-        "user-agent": $.UA,
-      },
+        "user-agent": $.UA
+      }
     };
     $.get(opts, async (err, resp, data) => {
       try {
@@ -245,34 +191,21 @@ async function getCoupons(shareCode) {
             if (res.msg) {
               console.log("异常：" + res.msg);
             }
-            if (
-              res.msg.indexOf("上限") !== -1 ||
-              res.msg.indexOf("未登录") !== -1
-            ) {
+            if (res.msg.indexOf("上限") !== -1 || res.msg.indexOf("未登录") !== -1) {
               $.max = true;
             }
-            if (
-              $.shareId &&
-              typeof res.data !== "undefined" &&
-              typeof res.data.joinNum !== "undefined"
-            ) {
+            if ($.shareId && typeof res.data !== "undefined" && typeof res.data.joinNum !== "undefined") {
               console.log(`当前${res.data.joinSuffix}:${res.data.joinNum}`);
             }
             if (res.code == 0 && res.data) {
               if (res.data.type == 1) {
                 console.log(`获得红包：${res.data.discount}元`);
               } else if (res.data.type == 3) {
-                console.log(
-                  `获得优惠券：️满${res.data.quota}减${res.data.discount}`
-                );
+                console.log(`获得优惠券：️满${res.data.quota}减${res.data.discount}`);
               } else if (res.data.type == 6) {
-                console.log(
-                  `获得打折券：满${res.data.quota}打${res.data.discount * 10}折`
-                );
+                console.log(`获得打折券：满${res.data.quota}打${res.data.discount * 10}折`);
               } else {
-                console.log(
-                  `获得未知${res.data.quota || ""} ${res.data.discount}`
-                );
+                console.log(`获得未知${res.data.quota || ""} ${res.data.discount}`);
                 console.log(data);
               }
             }
@@ -301,13 +234,7 @@ async function getInfo2() {
     };
     $.get(options, async (err, resp, data) => {
       try {
-        let setcookies =
-          (resp &&
-            resp["headers"] &&
-            (resp["headers"]["set-cookie"] ||
-              resp["headers"]["Set-Cookie"] ||
-              "")) ||
-          "";
+        let setcookies = (resp && resp["headers"] && (resp["headers"]["set-cookie"] || resp["headers"]["Set-Cookie"] || "")) || "";
         let setcookie = "";
         if (setcookies) {
           if (typeof setcookies != "object") {
@@ -321,18 +248,9 @@ async function getInfo2() {
             }
           }
         }
-        $.url2 =
-          (resp &&
-            resp["headers"] &&
-            (resp["headers"]["location"] ||
-              resp["headers"]["Location"] ||
-              "")) ||
-          "";
+        $.url2 = (resp && resp["headers"] && (resp["headers"]["location"] || resp["headers"]["Location"] || "")) || "";
         $.url2 = decodeURIComponent($.url2);
-        $.url2 =
-          ($.url2.match(/(https:\/\/prodev\.m\.jd\.com\/mall[^'"]+)/) &&
-            $.url2.match(/(https:\/\/prodev\.m\.jd\.com\/mall[^'"]+)/)[1]) ||
-          "";
+        $.url2 = ($.url2.match(/(https:\/\/prodev\.m\.jd\.com\/mall[^'"]+)/) && $.url2.match(/(https:\/\/prodev\.m\.jd\.com\/mall[^'"]+)/)[1]) || "";
       } catch (e) {
         $.logErr(e, resp);
       } finally {
@@ -354,13 +272,7 @@ async function getInfo1(cookie) {
     };
     $.get(options, async (err, resp, data) => {
       try {
-        let setcookies =
-          (resp &&
-            resp["headers"] &&
-            (resp["headers"]["set-cookie"] ||
-              resp["headers"]["Set-Cookie"] ||
-              "")) ||
-          "";
+        let setcookies = (resp && resp["headers"] && (resp["headers"]["set-cookie"] || resp["headers"]["Set-Cookie"] || "")) || "";
         let setcookie = "";
         if (setcookies) {
           if (typeof setcookies != "object") {
@@ -374,10 +286,7 @@ async function getInfo1(cookie) {
             }
           }
         }
-        $.url1 =
-          (data.match(/(https:\/\/u\.jd\.com\/jda[^']+)/) &&
-            data.match(/(https:\/\/u\.jd\.com\/jda[^']+)/)[1]) ||
-          "";
+        $.url1 = (data.match(/(https:\/\/u\.jd\.com\/jda[^']+)/) && data.match(/(https:\/\/u\.jd\.com\/jda[^']+)/)[1]) || "";
       } catch (e) {
         $.logErr(e, resp);
       } finally {
