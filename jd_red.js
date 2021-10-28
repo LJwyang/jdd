@@ -1,11 +1,10 @@
 /*
 双十一无门槛红包
-cron 0 0,12 * * * https://raw.githubusercontent.com/star261/jd/main/scripts/jd_red.js
-返利变量：FLCODE，默认给脚本作者返利，若需要返利给自己，请自己修改返利变量FLCODE；例：FLCODE="你的返利code"
+cron 0,30 0,12,19 jd_red.js
+添加环境变量FLCODE 如需自己吃返利，请填写该变量（https://u.jd.com/后面的英文）
 * */
-const $ = new Env('双11红包');
+const $ = new Env('抢双11无门槛红包');
 const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
-const flCode = $.isNode() ? (process.env.FLCODE ? process.env.FLCODE : '3tULmBz'):'3tULmBz';
 let cookiesArr = [];
 if ($.isNode()) {
     Object.keys(jdCookieNode).forEach((item) => {
@@ -20,7 +19,6 @@ if ($.isNode()) {
         ...$.toObj($.getdata("CookiesJD") || "[]").map((item) => item.cookie)].filter((item) => !!item);
 }
 let cookie = '';
-$.code = flCode;
 $.shareCode = '';
 !(async () => {
     if (!cookiesArr[0]) {
@@ -57,33 +55,45 @@ async function main() {
     $.UA = `jdapp;iPhone;10.2.0;13.1.2;${randomString(40)};M/5.0;network/wifi;ADID/;model/iPhone8,1;addressid/2308460622;appBuild/167853;jdSupportDarkMode/0;Mozilla/5.0 (iPhone; CPU iPhone OS 13_1_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1;`
     $.max = false;
     $.hotFlag = false;
+    const flCodeArr = ['3K9D5Kc', '3IVMKm8', '3I9UVcJ', '3IXbyRK', '3wVdViu'];
+    const flCode = $.isNode() ? (process.env.FLCODE ? process.env.FLCODE : flCodeArr[Math.floor((Math.random() * flCodeArr.length))]) : flCodeArr[Math.floor((Math.random() * flCodeArr.length))];
+    $.code = flCode;
     for (let i = 0; i < 10 && !$.max; i++) {
         $.newCookie = '';
         $.url1 = '';
         $.url2 = '';
         $.eid = '';
         await getInfo1();
-        if(!$.url1){console.log(`${userName},初始化1失败,可能黑号`);$.hotFlag = true;break;}
+        if (!$.url1) {
+            console.log(`${userName},初始化1失败,可能黑号`);
+            $.hotFlag = true;
+            break;
+        }
         await getInfo2();
-        if(!$.url2){console.log(`${userName},初始化2失败,可能黑号`);$.hotFlag = true;break;}
+        if (!$.url2) {
+            console.log(`${userName},初始化2失败,可能黑号`);
+            $.hotFlag = true;
+            break;
+        }
         $.actId = $.url2.match(/mall\/active\/([^/]+)\/index\.html/) && $.url2.match(/mall\/active\/([^/]+)\/index\.html/)[1] || '2GdKXzvywVytLvcJTk2K3pLtDEHq';
-        let arr = await getBody($.UA,$.url2);
+        let arr = await getBody($.UA, $.url2);
         await getEid(arr)
-        console.log(`$.actId:`+$.actId)
-        if($.eid){
-            if(i === 0 && $.shareCode){
+        console.log(`$.actId:` + $.actId)
+        if ($.eid) {
+            if (i === 0 && $.shareCode) {
                 await getCoupons($.shareCode);
-            }else{
+            } else {
                 await getCoupons("");
             }
         }
         await $.wait(5000)
     }
-    if($.index === 1 && !$.hotFlag){
-        await $.wait(2000)
-        await mainInfo()
-    }
+    // if ($.index === 1 && !$.hotFlag) {
+    //     await $.wait(2000)
+    //     await mainInfo()
+    // }
 }
+
 function mainInfo() {
     return new Promise(resolve => {
         let opts = {
@@ -92,7 +102,7 @@ function mainInfo() {
                 "Accept-Language": "zh-cn",
                 "Accept-Encoding": "gzip, deflate, br",
                 'Cookie': `${cookie} ${$.newCookie}`,
-                "User-Agent": $.UA ,
+                "User-Agent": $.UA,
             }
         }
         $.get(opts, async (err, resp, data) => {
@@ -100,13 +110,13 @@ function mainInfo() {
                 if (err) {
                     console.log(`${$.toStr(err)}`)
                 } else {
-                    let res = $.toObj(data,data);
-                    if(typeof res == 'object'){
-                        if(res.code == 0 && res.data && res.data.shareUrl){
+                    let res = $.toObj(data, data);
+                    if (typeof res == 'object') {
+                        if (res.code == 0 && res.data && res.data.shareUrl) {
                             $.shareCode = res.data.shareUrl.match(/$.code\?s=([^&]+)/) && res.data.shareUrl.match(/$.code\?s=([^&]+)/)[1] || ''
-                            console.log('助力码:'+$.shareCode)
+                            console.log('助力码:' + $.shareCode)
                         }
-                    }else{
+                    } else {
                         console.log(data)
                     }
                 }
@@ -118,6 +128,7 @@ function mainInfo() {
         })
     })
 }
+
 function getEid(arr) {
     return new Promise(resolve => {
         const options = {
@@ -149,6 +160,7 @@ function getEid(arr) {
         })
     })
 }
+
 function randomString(e) {
     e = e || 32;
     let t = "abcdef0123456789", a = t.length, n = "";
@@ -156,7 +168,8 @@ function randomString(e) {
         n += t.charAt(Math.floor(Math.random() * a));
     return n
 }
-async function getCoupons(shareCode){
+
+async function getCoupons(shareCode) {
     return new Promise(resolve => {
         let opts = {
             url: `https://api.m.jd.com/api?functionId=getCoupons&appid=u&_=${Date.now()}&loginType=2&body={%22platform%22:4,%22unionActId%22:%2231134%22,%22actId%22:%22${$.actId}%22,%22d%22:%22${$.code}%22,%22unionShareId%22:%22${shareCode}%22,%22type%22:1,%22eid%22:%22${$.eid}%22}&client=apple&clientVersion=8.3.6&h5st=undefined`,
@@ -173,30 +186,30 @@ async function getCoupons(shareCode){
                     console.log(`${$.toStr(err)}`)
                     console.log(`${$.name} API请求失败，请检查网路重试`)
                 } else {
-                    let res = $.toObj(data,data);
-                    if(typeof res == 'object'){
-                        if(res.msg){
-                            console.log('异常：'+res.msg)
+                    let res = $.toObj(data, data);
+                    if (typeof res == 'object') {
+                        if (res.msg) {
+                            console.log('异常：' + res.msg)
                         }
-                        if(res.msg.indexOf('上限') !== -1){
+                        if (res.msg.indexOf('上限') !== -1 || res.msg.indexOf('未登录') !== -1) {
                             $.max = true;
                         }
-                        if($.shareId && typeof res.data !== 'undefined' && typeof res.data.joinNum !== 'undefined'){
+                        if ($.shareId && typeof res.data !== 'undefined' && typeof res.data.joinNum !== 'undefined') {
                             console.log(`当前${res.data.joinSuffix}:${res.data.joinNum}`)
                         }
-                        if(res.code == 0 && res.data){
-                            if(res.data.type == 1){
+                        if (res.code == 0 && res.data) {
+                            if (res.data.type == 1) {
                                 console.log(`获得红包：${res.data.discount}元`)
-                            }else if(res.data.type == 3){
+                            } else if (res.data.type == 3) {
                                 console.log(`获得优惠券：️满${res.data.quota}减${res.data.discount}`)
-                            }else if(res.data.type == 6){
-                                console.log(`获得打折券：满${res.data.quota}打${res.data.discount*10}折`)
-                            }else{
+                            } else if (res.data.type == 6) {
+                                console.log(`获得打折券：满${res.data.quota}打${res.data.discount * 10}折`)
+                            } else {
                                 console.log(`获得未知${res.data.quota || ''} ${res.data.discount}`)
                                 console.log(data)
                             }
                         }
-                    }else{
+                    } else {
                         console.log(data)
                     }
                 }
@@ -208,11 +221,12 @@ async function getCoupons(shareCode){
         })
     })
 }
+
 async function getInfo2() {
     return new Promise(resolve => {
         const options = {
             url: $.url1,
-            followRedirect:false,
+            followRedirect: false,
             headers: {
                 'Cookie': `${cookie} ${$.newCookie}`,
                 'user-agent': $.UA
@@ -222,14 +236,14 @@ async function getInfo2() {
             try {
                 let setcookies = resp && resp['headers'] && (resp['headers']['set-cookie'] || resp['headers']['Set-Cookie'] || '') || ''
                 let setcookie = ''
-                if(setcookies){
-                    if(typeof setcookies != 'object'){
+                if (setcookies) {
+                    if (typeof setcookies != 'object') {
                         setcookie = setcookies.split(',')
-                    }else setcookie = setcookies
+                    } else setcookie = setcookies
                     for (let ck of setcookie) {
                         let name = ck.split(";")[0].trim()
-                        if(name.split("=")[1]){
-                            if($.newCookie.indexOf(name.split("=")[1]) == -1) $.newCookie += name.replace(/ /g,'')+'; '
+                        if (name.split("=")[1]) {
+                            if ($.newCookie.indexOf(name.split("=")[1]) == -1) $.newCookie += name.replace(/ /g, '') + '; '
                         }
                     }
                 }
@@ -244,11 +258,12 @@ async function getInfo2() {
         })
     })
 }
-async function getInfo1(cookie){
+
+async function getInfo1(cookie) {
     return new Promise(resolve => {
         const options = {
             url: `https://u.jd.com/${$.code}?s=${$.shareCode}`,
-            followRedirect:false,
+            followRedirect: false,
             headers: {
                 'Cookie': cookie,
                 'user-agent': $.UA
@@ -258,14 +273,14 @@ async function getInfo1(cookie){
             try {
                 let setcookies = resp && resp['headers'] && (resp['headers']['set-cookie'] || resp['headers']['Set-Cookie'] || '') || '';
                 let setcookie = ''
-                if(setcookies){
-                    if(typeof setcookies != 'object'){
+                if (setcookies) {
+                    if (typeof setcookies != 'object') {
                         setcookie = setcookies.split(',')
-                    }else setcookie = setcookies
+                    } else setcookie = setcookies
                     for (let ck of setcookie) {
                         let name = ck.split(";")[0].trim()
-                        if(name.split("=")[1]){
-                            if($.newCookie.indexOf(name.split("=")[1]) == -1) $.newCookie += name.replace(/ /g,'')+'; '
+                        if (name.split("=")[1]) {
+                            if ($.newCookie.indexOf(name.split("=")[1]) == -1) $.newCookie += name.replace(/ /g, '') + '; '
                         }
                     }
                 }
@@ -278,9 +293,10 @@ async function getInfo1(cookie){
         })
     })
 }
+
 const navigator = {
     userAgent: require('./USER_AGENTS').USER_AGENT,
-    plugins: { length: 0 },
+    plugins: {length: 0},
     language: "zh-CN",
 };
 const screen = {
@@ -292,9 +308,7 @@ const screen = {
     pixelDepth: 24,
 
 }
-const window = {
-
-}
+const window = {}
 const document = {
     location: {
         "ancestorOrigins": {},
@@ -317,6 +331,7 @@ var start_time = (new Date).getTime(),
     _eidFlag = !1,
     risk_jd_local_fingerprint = "",
     _jd_e_joint_;
+
 function t(a) {
     if (null == a || void 0 == a || "" == a) return "NA";
     if (null == a || void 0 == a || "" == a) var b = "";
@@ -409,29 +424,36 @@ function t(a) {
         "0123456789abcdef".charAt(b[c >> 2] >> c % 4 * 8 & 15);
     return a
 }
+
 function u(a, b, c, l, h, q) {
     a = A(A(b, a), A(l, q));
     return A(a << h | a >>> 32 - h, c)
 }
+
 function v(a, b, c, l, h, q, z) {
     return u(b & c | ~b & l, a, b, h, q, z)
 }
+
 function x(a, b, c, l, h, q, z) {
     return u(b & l | c & ~l, a, b, h, q, z)
 }
+
 function w(a, b, c, l, h, q, z) {
     return u(c ^ (b | ~l), a, b, h, q, z)
 }
+
 function A(a, b) {
     var c = (a & 65535) + (b & 65535);
     return (a >> 16) + (b >> 16) + (c >> 16) << 16 | c & 65535
 }
+
 _fingerprint_step = 2;
 var y = "",
     n = navigator.userAgent.toLowerCase();
 n.indexOf("jdapp") && (n = n.substring(0, 90));
 var e = navigator.language,
-    f = n; - 1 != f.indexOf("ipad") || -1 != f.indexOf("iphone os") || -1 != f.indexOf("midp") || -1 != f.indexOf(
+    f = n;
+-1 != f.indexOf("ipad") || -1 != f.indexOf("iphone os") || -1 != f.indexOf("midp") || -1 != f.indexOf(
     "rv:1.2.3.4") || -1 != f.indexOf("ucweb") || -1 != f.indexOf("android") || -1 != f.indexOf("windows ce") ||
 f.indexOf("windows mobile");
 var r = "NA",
@@ -454,30 +476,44 @@ try {
         "OSF1"), -1 != f.indexOf("irix") && (r = "IRIX", k = ""), -1 != f.indexOf("freebsd") && (r =
         "FreeBSD"), -1 != f.indexOf("symbianos") && (r = "SymbianOS", k = f.substring(f.indexOf(
         "SymbianOS/") + 10, 3))
-} catch (a) { }
+} catch (a) {
+}
 _fingerprint_step = 3;
 var g = "NA",
     m = "NA";
 try {
     -1 != f.indexOf("msie") && (g = "ie", m = f.substring(f.indexOf("msie ") + 5), m.indexOf(";") && (m = m.substring(
-        0, m.indexOf(";")))); - 1 != f.indexOf("firefox") && (g = "Firefox", m = f.substring(f.indexOf(
-        "firefox/") + 8)); - 1 != f.indexOf("opera") && (g = "Opera", m = f.substring(f.indexOf("opera/") + 6,
-        4)); - 1 != f.indexOf("safari") && (g = "safari", m = f.substring(f.indexOf("safari/") + 7)); - 1 != f.indexOf(
+        0, m.indexOf(";"))));
+    -1 != f.indexOf("firefox") && (g = "Firefox", m = f.substring(f.indexOf(
+        "firefox/") + 8));
+    -1 != f.indexOf("opera") && (g = "Opera", m = f.substring(f.indexOf("opera/") + 6,
+        4));
+    -1 != f.indexOf("safari") && (g = "safari", m = f.substring(f.indexOf("safari/") + 7));
+    -1 != f.indexOf(
         "chrome") && (g = "chrome", m = f.substring(f.indexOf("chrome/") + 7), m.indexOf(" ") && (m = m.substring(
-        0, m.indexOf(" ")))); - 1 != f.indexOf("navigator") && (g = "navigator", m = f.substring(f.indexOf(
-        "navigator/") + 10)); - 1 != f.indexOf("applewebkit") && (g = "applewebkit_chrome", m = f.substring(f.indexOf(
-        "applewebkit/") + 12), m.indexOf(" ") && (m = m.substring(0, m.indexOf(" ")))); - 1 != f.indexOf(
+        0, m.indexOf(" "))));
+    -1 != f.indexOf("navigator") && (g = "navigator", m = f.substring(f.indexOf(
+        "navigator/") + 10));
+    -1 != f.indexOf("applewebkit") && (g = "applewebkit_chrome", m = f.substring(f.indexOf(
+        "applewebkit/") + 12), m.indexOf(" ") && (m = m.substring(0, m.indexOf(" "))));
+    -1 != f.indexOf(
         "sogoumobilebrowser") && (g = "\u641c\u72d7\u624b\u673a\u6d4f\u89c8\u5668");
     if (-1 != f.indexOf("ucbrowser") || -1 != f.indexOf("ucweb")) g = "UC\u6d4f\u89c8\u5668";
-    if (-1 != f.indexOf("qqbrowser") || -1 != f.indexOf("tencenttraveler")) g = "QQ\u6d4f\u89c8\u5668"; - 1 !=
-    f.indexOf("metasr") && (g = "\u641c\u72d7\u6d4f\u89c8\u5668"); - 1 != f.indexOf("360se") && (g =
-        "360\u6d4f\u89c8\u5668"); - 1 != f.indexOf("the world") && (g =
-        "\u4e16\u754c\u4e4b\u7a97\u6d4f\u89c8\u5668"); - 1 != f.indexOf("maxthon") && (g =
+    if (-1 != f.indexOf("qqbrowser") || -1 != f.indexOf("tencenttraveler")) g = "QQ\u6d4f\u89c8\u5668";
+    -1 !=
+    f.indexOf("metasr") && (g = "\u641c\u72d7\u6d4f\u89c8\u5668");
+    -1 != f.indexOf("360se") && (g =
+        "360\u6d4f\u89c8\u5668");
+    -1 != f.indexOf("the world") && (g =
+        "\u4e16\u754c\u4e4b\u7a97\u6d4f\u89c8\u5668");
+    -1 != f.indexOf("maxthon") && (g =
         "\u9068\u6e38\u6d4f\u89c8\u5668")
-} catch (a) { }
+} catch (a) {
+}
+
 class JdJrTdRiskFinger {
     f = {
-        options: function (){
+        options: function () {
             return {}
         },
         nativeForEach: Array.prototype.forEach,
@@ -793,7 +829,8 @@ class JdJrTdRiskFinger {
                 var C = b.getExtension("WEBGL_debug_renderer_info");
                 C && (c.push("wuv:" + b.getParameter(C.UNMASKED_VENDOR_WEBGL)), c.push("wur:" + b.getParameter(
                     C.UNMASKED_RENDERER_WEBGL)))
-            } catch (D) { }
+            } catch (D) {
+            }
             return c.join("\u00a7")
         },
         isCanvasSupported: function () {
@@ -814,7 +851,8 @@ class JdJrTdRiskFinger {
                 c = c.toLowerCase();
                 (0 < c.indexOf("jdjr-app") || 0 <= c.indexOf("jdapp")) && (0 < c.indexOf("iphone") || 0 < c
                     .indexOf("ipad")) || (b = a.getContext("webgl") || a.getContext("experimental-webgl"))
-            } catch (l) { }
+            } catch (l) {
+            }
             b || (b = null);
             return b
         },
@@ -822,7 +860,7 @@ class JdJrTdRiskFinger {
             if (null !== a)
                 if (this.nativeForEach && a.forEach === this.nativeForEach) a.forEach(b, c);
                 else if (a.length === +a.length)
-                    for (var l = 0, h = a.length; l < h && b.call(c, a[l], l, a) !== {}; l++);
+                    for (var l = 0, h = a.length; l < h && b.call(c, a[l], l, a) !== {}; l++) ;
                 else
                     for (l in a)
                         if (a.hasOwnProperty(l) && b.call(c, a[l], l, a) === {}) break
@@ -970,11 +1008,14 @@ class JdJrTdRiskFinger {
         }
     };
 }
+
 var JDDSecCryptoJS = JDDSecCryptoJS || function (t, u) {
     var v = {},
         x = v.lib = {},
         w = x.Base = function () {
-            function g() {}
+            function g() {
+            }
+
             return {
                 extend: function (m) {
                     g.prototype = this;
@@ -992,7 +1033,8 @@ var JDDSecCryptoJS = JDDSecCryptoJS || function (t, u) {
                     m.init.apply(m, arguments);
                     return m
                 },
-                init: function () {},
+                init: function () {
+                },
                 mixIn: function (m) {
                     for (var a in m) m.hasOwnProperty(a) && (this[a] = m[a]);
                     m.hasOwnProperty("toString") && (this.toString = m.toString)
@@ -1207,6 +1249,7 @@ JDDSecCryptoJS.lib.Cipher || function (t) {
                 function g(m) {
                     if ("string" != typeof m) return k
                 }
+
                 return function (m) {
                     return {
                         encrypt: function (a, b, c) {
@@ -1244,6 +1287,7 @@ JDDSecCryptoJS.lib.Cipher || function (t) {
             l ? this._iv = t : l = this._prevBlock;
             for (var h = 0; h < c; h++) a[b + h] ^= l[h]
         }
+
         var m = e.extend();
         m.Encryptor = m.extend({
             processBlock: function (a, b) {
@@ -1397,7 +1441,8 @@ JDDSecCryptoJS.lib.Cipher || function (t) {
                         24 | x[q >>> 16 & 255] << 16 | x[q >>> 8 & 255] << 8 | x[q & 255], q ^= m[h /
                     c | 0] << 24);
                     l[h] = l[h - c] ^ q
-                } b = this._invKeySchedule = [];
+                }
+            b = this._invKeySchedule = [];
             for (c = 0; c < a; c++) h = a - c, q = c % 4 ? l[h] : l[h - 4], b[c] = 4 > c || 4 >= h ? q :
                 f[x[q >>> 24]] ^ r[x[q >>> 16 & 255]] ^ k[x[q >>> 8 & 255]] ^ g[x[q & 255]]
         },
@@ -1578,11 +1623,13 @@ class JDDMAC {
                 return parseInt(v, 16)
             })
     }
+
     mac(v) {
         for (var x = -1, w = 0, A = v.length; w < A; w++) x = x >>> 8 ^ t[(x ^ v.charCodeAt(w)) & 255];
         return (x ^ -1) >>> 0
     }
 }
+
 var _CurrentPageProtocol = "https:" == document.location.protocol ? "https://" : "http://",
     _JdJrTdRiskDomainName = window.__fp_domain || "gia.jd.com",
     _url_query_str = "",
@@ -1591,7 +1638,8 @@ var _CurrentPageProtocol = "https:" == document.location.protocol ? "https://" :
         var t = document.location.href.toString();
         try {
             _root_domain = /^https?:\/\/(?:\w+\.)*?(\w*\.(?:com\.cn|cn|com|net|id))[\\\/]*/.exec(t)[1]
-        } catch (v) {}
+        } catch (v) {
+        }
         var u = t.indexOf("?");
         0 < u && (_url_query_str = t.substring(u + 1), 500 < _url_query_str.length && (_url_query_str = _url_query_str.substring(
             0, 499)), t = t.substring(0, u));
@@ -1638,7 +1686,8 @@ var td_collect = new function () {
                         var b = a[1];
                         void 0 === f[b] && w.push(b);
                         f[b] = !0
-                    } catch (c) { }
+                    } catch (c) {
+                    }
                 },
                 f = {};
             try {
@@ -1647,27 +1696,34 @@ var td_collect = new function () {
                         url: "stun:stun.services.mozilla.com"
                     }]
                 })
-            } catch (k) { }
+            } catch (k) {
+            }
             try {
                 void 0 === r && (r = new n({
                     iceServers: []
                 }))
-            } catch (k) { }
+            } catch (k) {
+            }
             if (r || window.mozRTCPeerConnection) try {
                 r.createDataChannel("chat", {
                     reliable: !1
                 })
-            } catch (k) { }
+            } catch (k) {
+            }
             r && (r.onicecandidate = function (k) {
                 k.candidate && e(k.candidate.candidate)
             }, r.createOffer(function (k) {
-                r.setLocalDescription(k, function () { }, function () { })
-            }, function () { }), setTimeout(function () {
+                r.setLocalDescription(k, function () {
+                }, function () {
+                })
+            }, function () {
+            }), setTimeout(function () {
                 try {
                     r.localDescription.sdp.split("\n").forEach(function (k) {
                         0 === k.indexOf("a=candidate:") && e(k)
                     })
-                } catch (k) { }
+                } catch (k) {
+                }
             }, 800))
         }
     }
@@ -1687,6 +1743,7 @@ var td_collect = new function () {
             document.body.removeChild(r);
             return m
         }
+
         var e = ["monospace", "sans-serif", "serif"],
             f = [],
             r = document.createElement("span");
@@ -1721,6 +1778,7 @@ var td_collect = new function () {
         }
         return e
     }
+
     this.bizId = "";
     this.bioConfig = {
         type: "42",
@@ -1744,28 +1802,35 @@ var td_collect = new function () {
         try {
             var f = document.cookie.replace(/(?:(?:^|.*;\s*)3AB9D23F7A4B3C9B\s*=\s*([^;]*).*$)|^.*$/, "$1");
             0 !== f.length && (e.cookie = f)
-        } catch (k) { }
+        } catch (k) {
+        }
         try {
             window.localStorage && null !== window.localStorage && 0 !== window.localStorage.length && (e.localStorage =
                 window.localStorage.getItem("3AB9D23F7A4B3C9B"))
-        } catch (k) { }
+        } catch (k) {
+        }
         try {
             window.sessionStorage && null !== window.sessionStorage && (e.sessionStorage = window.sessionStorage[
                 "3AB9D23F7A4B3C9B"])
-        } catch (k) { }
+        } catch (k) {
+        }
         try {
             p.globalStorage && (e.globalStorage = window.globalStorage[".localdomain"]["3AB9D23F7A4B3C9B"])
-        } catch (k) { }
+        } catch (k) {
+        }
         try {
             d && "function" == typeof d.load && "function" == typeof d.getAttribute && (d.load(
                 "jdgia_user_data"), e.userData = d.getAttribute("3AB9D23F7A4B3C9B"))
-        } catch (k) { }
+        } catch (k) {
+        }
         try {
             E.indexedDbId && (e.indexedDb = E.indexedDbId)
-        } catch (k) { }
+        } catch (k) {
+        }
         try {
             E.webDbId && (e.webDb = E.webDbId)
-        } catch (k) { }
+        } catch (k) {
+        }
         try {
             for (var r in e)
                 if (32 < e[r].length) {
@@ -1773,12 +1838,14 @@ var td_collect = new function () {
                     n || (_eidFlag = !0);
                     break
                 }
-        } catch (k) { }
+        } catch (k) {
+        }
         try {
             ("undefined" === typeof _JdEid || 0 >= _JdEid.length) && this.db("3AB9D23F7A4B3C9B");
             if ("undefined" === typeof _JdEid || 0 >= _JdEid.length) _JdEid = u("3AB9D23F7A4B3C9B");
             if ("undefined" === typeof _JdEid || 0 >= _JdEid.length) _eidFlag = !0
-        } catch (k) { }
+        } catch (k) {
+        }
         return _JdEid
     };
     var w = [],
@@ -1824,7 +1891,8 @@ var td_collect = new function () {
             this.deviceInfo.userAgent = navigator.userAgent;
             this.deviceInfo.isAndroid = e;
             this.createWorker()
-        } catch (f) { }
+        } catch (f) {
+        }
     };
     this.db = function (n, e) {
         try {
@@ -1835,19 +1903,25 @@ var td_collect = new function () {
                     r.executeSql(
                         "CREATE TABLE IF NOT EXISTS cache(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, value TEXT NOT NULL, UNIQUE (name))",
                         [],
-                        function (k, g) { },
-                        function (k, g) { });
+                        function (k, g) {
+                        },
+                        function (k, g) {
+                        });
                     r.executeSql("INSERT OR REPLACE INTO cache(name, value) VALUES(?, ?)", [n, e],
-                        function (k, g) { },
-                        function (k, g) { })
+                        function (k, g) {
+                        },
+                        function (k, g) {
+                        })
                 }) : f.transaction(function (r) {
                     r.executeSql("SELECT value FROM cache WHERE name=?", [n], function (k, g) {
                         1 <= g.rows.length && (_JdEid = g.rows.item(0).value)
-                    }, function (k, g) { })
+                    }, function (k, g) {
+                    })
                 })
             }
             _fingerprint_step = "n"
-        } catch (r) { }
+        } catch (r) {
+        }
     };
     this.setCookie = function (n, e) {
         void 0 !== e && "" != e && (document.cookie = n + "=" + e +
@@ -1885,7 +1959,8 @@ var td_collect = new function () {
             if (window.getComputedStyle)
                 for (var k = 0; k < r.length; k++) document.body.appendChild(e), e.style.color = r[k], f[r[k]] =
                     window.getComputedStyle(e).getPropertyValue("color"), document.body.removeChild(e)
-        } catch (D) { }
+        } catch (D) {
+        }
         e = {
             ca: {},
             ts: {},
@@ -1906,7 +1981,8 @@ var td_collect = new function () {
                 (c = document.createElement("canvas").getContext(m[k], {
                     stencil: !0
                 })) && c && (b = c, a.push(m[k]))
-            } catch (D) { }
+            } catch (D) {
+            }
             a.length && (g = {
                 name: a,
                 gl: b
@@ -1922,11 +1998,13 @@ var td_collect = new function () {
             b = [];
             try {
                 b = k.getSupportedExtensions(), r.extensions = b
-            } catch (D) { }
+            } catch (D) {
+            }
             try {
                 var l = k.getExtension("WEBGL_debug_renderer_info");
                 l && (r.wuv = k.getParameter(l.UNMASKED_VENDOR_WEBGL), r.wur = k.getParameter(l.UNMASKED_RENDERER_WEBGL))
-            } catch (D) { }
+            } catch (D) {
+            }
         }
         e.m.documentMode = document.documentMode;
         e.m.compatMode = document.compatMode;
@@ -1941,7 +2019,8 @@ var td_collect = new function () {
         k.javaEnabled = false;
         try {
             k.taintEnabled = navigator.taintEnabled()
-        } catch (D) { }
+        } catch (D) {
+        }
         e.n = k;
         k = navigator.userAgent.toLowerCase();
         if (h = k.match(/rv:([\d.]+)\) like gecko/)) var q = h[1];
@@ -1958,13 +2037,16 @@ var td_collect = new function () {
                     l.name = z;
                     try {
                         l.version = C.GetVariable("$version")
-                    } catch (D) { }
+                    } catch (D) {
+                    }
                     try {
                         l.version = C.GetVersions()
-                    } catch (D) { }
+                    } catch (D) {
+                    }
                     l.version && 0 < l.version.length || (l.version = "");
                     h.push(l)
-                } catch (D) { }
+                } catch (D) {
+                }
             } else {
             q = navigator.plugins;
             l = {};
@@ -1990,7 +2072,8 @@ var td_collect = new function () {
         try {
             f.cookie = navigator.cookieEnabled, f.localStorage = !!window.localStorage, f.sessionStorage = !!
                 window.sessionStorage, f.globalStorage = !!window.globalStorage, f.indexedDB = !!window.indexedDB
-        } catch (D) { }
+        } catch (D) {
+        }
         e.ss = f;
         e.ts.deviceTime = n.getTime();
         e.ts.deviceEndTime = (new Date).getTime();
@@ -2008,7 +2091,8 @@ var td_collect = new function () {
                 null != k.tk && "" != k.tk && k.tk.startsWith("jdd") ? (e.deviceInfo.sdkToken = k.tk,
                     f = !0) : void 0 != k.tk && null != k.tk && "" != k.tk && (e.deviceInfo.sdkToken =
                     k.tk))
-            } catch (m) { }
+            } catch (m) {
+            }
             r = !1;
             e.deviceInfo.isJdApp ? (e.deviceInfo.clientVersion = navigator.userAgent.split(";")[2], (r = 0 < e.compareVersion(
                 e.deviceInfo.clientVersion, "7.0.2")) && !f && e.getJdSdkCacheToken(function (m) {
@@ -2021,7 +2105,8 @@ var td_collect = new function () {
                 null != m && "" != m && m.startsWith("jdd") || e.getJdJrBioToken(n)
             }));
             "function" == typeof n && n(e.deviceInfo)
-        } catch (m) { }
+        } catch (m) {
+        }
     };
     this.compareVersion = function (n, e) {
         try {
@@ -2035,7 +2120,8 @@ var td_collect = new function () {
                 if (k < g) break;
                 if (k > g) return 1
             }
-        } catch (m) { }
+        } catch (m) {
+        }
         return -1
     };
     this.isWKWebView = function () {
@@ -2047,7 +2133,8 @@ var td_collect = new function () {
                 var e = (n + "").match(/"token":"(.*?)"/);
                 if (e && 1 < e.length) return e[1]
             }
-        } catch (f) { }
+        } catch (f) {
+        }
         return ""
     };
     this.getJdJrBioToken = function (n) {
@@ -2098,7 +2185,8 @@ var td_collect = new function () {
                     t: (new Date).getTime()
                 }, e.store("BATQW722QTLYVCRD", JSON.stringify(f))))
             })
-        } catch (f) { }
+        } catch (f) {
+        }
     };
     this.getJdBioToken = function (n) {
         var e = this;
@@ -2184,24 +2272,30 @@ var td_collect = new function () {
                     t: (new Date).getTime()
                 }, e.store("BATQW722QTLYVCRD", JSON.stringify(r))))
             }
-        } catch (r) { }
+        } catch (r) {
+        }
     };
     this.store = function (n, e) {
         try {
             this.setCookie(n, e)
-        } catch (f) { }
+        } catch (f) {
+        }
         try {
             window.localStorage && window.localStorage.setItem(n, e)
-        } catch (f) { }
+        } catch (f) {
+        }
         try {
             window.sessionStorage && window.sessionStorage.setItem(n, e)
-        } catch (f) { }
+        } catch (f) {
+        }
         try {
             window.globalStorage && window.globalStorage[".localdomain"].setItem(n, e)
-        } catch (f) { }
+        } catch (f) {
+        }
         try {
             this.db(n, _JdEid)
-        } catch (f) { }
+        } catch (f) {
+        }
     };
     this.getLocal = function (n) {
         var e = {},
@@ -2210,38 +2304,47 @@ var td_collect = new function () {
             var r = document.cookie.replace(new RegExp("(?:(?:^|.*;\\s*)" + n + "\\s*\\=\\s*([^;]*).*$)|^.*$"),
                 "$1");
             0 !== r.length && (e.cookie = r)
-        } catch (g) { }
+        } catch (g) {
+        }
         try {
             window.localStorage && null !== window.localStorage && 0 !== window.localStorage.length && (e.localStorage =
                 window.localStorage.getItem(n))
-        } catch (g) { }
+        } catch (g) {
+        }
         try {
             window.sessionStorage && null !== window.sessionStorage && (e.sessionStorage = window.sessionStorage[
                 n])
-        } catch (g) { }
+        } catch (g) {
+        }
         try {
             p.globalStorage && (e.globalStorage = window.globalStorage[".localdomain"][n])
-        } catch (g) { }
+        } catch (g) {
+        }
         try {
             d && "function" == typeof d.load && "function" == typeof d.getAttribute && (d.load(
                 "jdgia_user_data"), e.userData = d.getAttribute(n))
-        } catch (g) { }
+        } catch (g) {
+        }
         try {
             E.indexedDbId && (e.indexedDb = E.indexedDbId)
-        } catch (g) { }
+        } catch (g) {
+        }
         try {
             E.webDbId && (e.webDb = E.webDbId)
-        } catch (g) { }
+        } catch (g) {
+        }
         try {
             for (var k in e)
                 if (32 < e[k].length) {
                     f = e[k];
                     break
                 }
-        } catch (g) { }
+        } catch (g) {
+        }
         try {
             if (null == f || "undefined" === typeof f || 0 >= f.length) f = u(n)
-        } catch (g) { }
+        } catch (g) {
+        }
         return f
     };
     this.createWorker = function () {
@@ -2260,7 +2363,8 @@ var td_collect = new function () {
             }
             try {
                 this.worker = new Worker(URL.createObjectURL(n))
-            } catch (e) { }
+            } catch (e) {
+            }
         }
     };
     this.reportWorker = function (n, e, f, r) {
@@ -2270,8 +2374,10 @@ var td_collect = new function () {
                 data: e,
                 success: !1,
                 async: !1
-            })), this.worker.onmessage = function (k) { })
-        } catch (k) { }
+            })), this.worker.onmessage = function (k) {
+            })
+        } catch (k) {
+        }
     }
 };
 
@@ -2292,20 +2398,23 @@ function td_collect_exe() {
     };
     try {
         u.o = _CurrentPageUrl, u.qs = _url_query_str
-    } catch (w) { }
+    } catch (w) {
+    }
     _fingerprint_step = 9;
     0 >= _JdEid.length && (_JdEid = td_collect.obtainLocal(), 0 < _JdEid.length && (_eidFlag = !0));
     u.fc = _JdEid;
     try {
         u.t = jd_risk_token_id
-    } catch (w) { }
+    } catch (w) {
+    }
     try {
         if ("undefined" != typeof gia_fp_qd_uuid && 0 <= gia_fp_qd_uuid.length) u.qi = gia_fp_qd_uuid;
         else {
             var x = _JdJrRiskClientStorage.jdtdstorage_cookie("qd_uid");
             u.qi = void 0 == x ? "" : x
         }
-    } catch (w) { }
+    } catch (w) {
+    }
     "undefined" != typeof jd_shadow__ && 0 < jd_shadow__.length && (u.jtb = jd_shadow__);
     try {
         td_collect.deviceInfo && void 0 != td_collect.deviceInfo && null != td_collect.deviceInfo.sdkToken && "" !=
@@ -2316,7 +2425,7 @@ function td_collect_exe() {
     }
     x = td_collect.tdencrypt(u);
     // console.log(u)
-    return { a: x, d: t }
+    return {a: x, d: t}
 }
 
 function _jdJrTdCommonsObtainPin(t) {
@@ -2342,8 +2451,295 @@ function getBody(userAgent, url = document.location.href) {
         return t
     });
     let arr = td_collect_exe()
-    return { fp, ...arr }
+    return {fp, ...arr}
 }
 
 
-function Env(t,e){"undefined"!=typeof process&&JSON.stringify(process.env).indexOf("GITHUB")>-1&&process.exit(0);class s{constructor(t){this.env=t}send(t,e="GET"){t="string"==typeof t?{url:t}:t;let s=this.get;return"POST"===e&&(s=this.post),new Promise((e,i)=>{s.call(this,t,(t,s,r)=>{t?i(t):e(s)})})}get(t){return this.send.call(this.env,t)}post(t){return this.send.call(this.env,t,"POST")}}return new class{constructor(t,e){this.name=t,this.http=new s(this),this.data=null,this.dataFile="box.dat",this.logs=[],this.isMute=!1,this.isNeedRewrite=!1,this.logSeparator="\n",this.startTime=(new Date).getTime(),Object.assign(this,e),this.log("",`🔔${this.name}, 开始!`)}isNode(){return"undefined"!=typeof module&&!!module.exports}isQuanX(){return"undefined"!=typeof $task}isSurge(){return"undefined"!=typeof $httpClient&&"undefined"==typeof $loon}isLoon(){return"undefined"!=typeof $loon}toObj(t,e=null){try{return JSON.parse(t)}catch{return e}}toStr(t,e=null){try{return JSON.stringify(t)}catch{return e}}getjson(t,e){let s=e;const i=this.getdata(t);if(i)try{s=JSON.parse(this.getdata(t))}catch{}return s}setjson(t,e){try{return this.setdata(JSON.stringify(t),e)}catch{return!1}}getScript(t){return new Promise(e=>{this.get({url:t},(t,s,i)=>e(i))})}runScript(t,e){return new Promise(s=>{let i=this.getdata("@chavy_boxjs_userCfgs.httpapi");i=i?i.replace(/\n/g,"").trim():i;let r=this.getdata("@chavy_boxjs_userCfgs.httpapi_timeout");r=r?1*r:20,r=e&&e.timeout?e.timeout:r;const[o,h]=i.split("@"),n={url:`http://${h}/v1/scripting/evaluate`,body:{script_text:t,mock_type:"cron",timeout:r},headers:{"X-Key":o,Accept:"*/*"}};this.post(n,(t,e,i)=>s(i))}).catch(t=>this.logErr(t))}loaddata(){if(!this.isNode())return{};{this.fs=this.fs?this.fs:require("fs"),this.path=this.path?this.path:require("path");const t=this.path.resolve(this.dataFile),e=this.path.resolve(process.cwd(),this.dataFile),s=this.fs.existsSync(t),i=!s&&this.fs.existsSync(e);if(!s&&!i)return{};{const i=s?t:e;try{return JSON.parse(this.fs.readFileSync(i))}catch(t){return{}}}}}writedata(){if(this.isNode()){this.fs=this.fs?this.fs:require("fs"),this.path=this.path?this.path:require("path");const t=this.path.resolve(this.dataFile),e=this.path.resolve(process.cwd(),this.dataFile),s=this.fs.existsSync(t),i=!s&&this.fs.existsSync(e),r=JSON.stringify(this.data);s?this.fs.writeFileSync(t,r):i?this.fs.writeFileSync(e,r):this.fs.writeFileSync(t,r)}}lodash_get(t,e,s){const i=e.replace(/\[(\d+)\]/g,".$1").split(".");let r=t;for(const t of i)if(r=Object(r)[t],void 0===r)return s;return r}lodash_set(t,e,s){return Object(t)!==t?t:(Array.isArray(e)||(e=e.toString().match(/[^.[\]]+/g)||[]),e.slice(0,-1).reduce((t,s,i)=>Object(t[s])===t[s]?t[s]:t[s]=Math.abs(e[i+1])>>0==+e[i+1]?[]:{},t)[e[e.length-1]]=s,t)}getdata(t){let e=this.getval(t);if(/^@/.test(t)){const[,s,i]=/^@(.*?)\.(.*?)$/.exec(t),r=s?this.getval(s):"";if(r)try{const t=JSON.parse(r);e=t?this.lodash_get(t,i,""):e}catch(t){e=""}}return e}setdata(t,e){let s=!1;if(/^@/.test(e)){const[,i,r]=/^@(.*?)\.(.*?)$/.exec(e),o=this.getval(i),h=i?"null"===o?null:o||"{}":"{}";try{const e=JSON.parse(h);this.lodash_set(e,r,t),s=this.setval(JSON.stringify(e),i)}catch(e){const o={};this.lodash_set(o,r,t),s=this.setval(JSON.stringify(o),i)}}else s=this.setval(t,e);return s}getval(t){return this.isSurge()||this.isLoon()?$persistentStore.read(t):this.isQuanX()?$prefs.valueForKey(t):this.isNode()?(this.data=this.loaddata(),this.data[t]):this.data&&this.data[t]||null}setval(t,e){return this.isSurge()||this.isLoon()?$persistentStore.write(t,e):this.isQuanX()?$prefs.setValueForKey(t,e):this.isNode()?(this.data=this.loaddata(),this.data[e]=t,this.writedata(),!0):this.data&&this.data[e]||null}initGotEnv(t){this.got=this.got?this.got:require("got"),this.cktough=this.cktough?this.cktough:require("tough-cookie"),this.ckjar=this.ckjar?this.ckjar:new this.cktough.CookieJar,t&&(t.headers=t.headers?t.headers:{},void 0===t.headers.Cookie&&void 0===t.cookieJar&&(t.cookieJar=this.ckjar))}get(t,e=(()=>{})){t.headers&&(delete t.headers["Content-Type"],delete t.headers["Content-Length"]),this.isSurge()||this.isLoon()?(this.isSurge()&&this.isNeedRewrite&&(t.headers=t.headers||{},Object.assign(t.headers,{"X-Surge-Skip-Scripting":!1})),$httpClient.get(t,(t,s,i)=>{!t&&s&&(s.body=i,s.statusCode=s.status),e(t,s,i)})):this.isQuanX()?(this.isNeedRewrite&&(t.opts=t.opts||{},Object.assign(t.opts,{hints:!1})),$task.fetch(t).then(t=>{const{statusCode:s,statusCode:i,headers:r,body:o}=t;e(null,{status:s,statusCode:i,headers:r,body:o},o)},t=>e(t))):this.isNode()&&(this.initGotEnv(t),this.got(t).on("redirect",(t,e)=>{try{if(t.headers["set-cookie"]){const s=t.headers["set-cookie"].map(this.cktough.Cookie.parse).toString();s&&this.ckjar.setCookieSync(s,null),e.cookieJar=this.ckjar}}catch(t){this.logErr(t)}}).then(t=>{const{statusCode:s,statusCode:i,headers:r,body:o}=t;e(null,{status:s,statusCode:i,headers:r,body:o},o)},t=>{const{message:s,response:i}=t;e(s,i,i&&i.body)}))}post(t,e=(()=>{})){if(t.body&&t.headers&&!t.headers["Content-Type"]&&(t.headers["Content-Type"]="application/x-www-form-urlencoded"),t.headers&&delete t.headers["Content-Length"],this.isSurge()||this.isLoon())this.isSurge()&&this.isNeedRewrite&&(t.headers=t.headers||{},Object.assign(t.headers,{"X-Surge-Skip-Scripting":!1})),$httpClient.post(t,(t,s,i)=>{!t&&s&&(s.body=i,s.statusCode=s.status),e(t,s,i)});else if(this.isQuanX())t.method="POST",this.isNeedRewrite&&(t.opts=t.opts||{},Object.assign(t.opts,{hints:!1})),$task.fetch(t).then(t=>{const{statusCode:s,statusCode:i,headers:r,body:o}=t;e(null,{status:s,statusCode:i,headers:r,body:o},o)},t=>e(t));else if(this.isNode()){this.initGotEnv(t);const{url:s,...i}=t;this.got.post(s,i).then(t=>{const{statusCode:s,statusCode:i,headers:r,body:o}=t;e(null,{status:s,statusCode:i,headers:r,body:o},o)},t=>{const{message:s,response:i}=t;e(s,i,i&&i.body)})}}time(t,e=null){const s=e?new Date(e):new Date;let i={"M+":s.getMonth()+1,"d+":s.getDate(),"H+":s.getHours(),"m+":s.getMinutes(),"s+":s.getSeconds(),"q+":Math.floor((s.getMonth()+3)/3),S:s.getMilliseconds()};/(y+)/.test(t)&&(t=t.replace(RegExp.$1,(s.getFullYear()+"").substr(4-RegExp.$1.length)));for(let e in i)new RegExp("("+e+")").test(t)&&(t=t.replace(RegExp.$1,1==RegExp.$1.length?i[e]:("00"+i[e]).substr((""+i[e]).length)));return t}msg(e=t,s="",i="",r){const o=t=>{if(!t)return t;if("string"==typeof t)return this.isLoon()?t:this.isQuanX()?{"open-url":t}:this.isSurge()?{url:t}:void 0;if("object"==typeof t){if(this.isLoon()){let e=t.openUrl||t.url||t["open-url"],s=t.mediaUrl||t["media-url"];return{openUrl:e,mediaUrl:s}}if(this.isQuanX()){let e=t["open-url"]||t.url||t.openUrl,s=t["media-url"]||t.mediaUrl;return{"open-url":e,"media-url":s}}if(this.isSurge()){let e=t.url||t.openUrl||t["open-url"];return{url:e}}}};if(this.isMute||(this.isSurge()||this.isLoon()?$notification.post(e,s,i,o(r)):this.isQuanX()&&$notify(e,s,i,o(r))),!this.isMuteLog){let t=["","==============📣系统通知📣=============="];t.push(e),s&&t.push(s),i&&t.push(i),console.log(t.join("\n")),this.logs=this.logs.concat(t)}}log(...t){t.length>0&&(this.logs=[...this.logs,...t]),console.log(t.join(this.logSeparator))}logErr(t,e){const s=!this.isSurge()&&!this.isQuanX()&&!this.isLoon();s?this.log("",`❗️${this.name}, 错误!`,t.stack):this.log("",`❗️${this.name}, 错误!`,t)}wait(t){return new Promise(e=>setTimeout(e,t))}done(t={}){const e=(new Date).getTime(),s=(e-this.startTime)/1e3;this.log("",`🔔${this.name}, 结束! 🕛 ${s} 秒`),this.log(),(this.isSurge()||this.isQuanX()||this.isLoon())&&$done(t)}}(t,e)}
+function Env(t, e) {
+    "undefined" != typeof process && JSON.stringify(process.env).indexOf("GITHUB") > -1 && process.exit(0);
+
+    class s {
+        constructor(t) {
+            this.env = t
+        }
+
+        send(t, e = "GET") {
+            t = "string" == typeof t ? {url: t} : t;
+            let s = this.get;
+            return "POST" === e && (s = this.post), new Promise((e, i) => {
+                s.call(this, t, (t, s, r) => {
+                    t ? i(t) : e(s)
+                })
+            })
+        }
+
+        get(t) {
+            return this.send.call(this.env, t)
+        }
+
+        post(t) {
+            return this.send.call(this.env, t, "POST")
+        }
+    }
+
+    return new class {
+        constructor(t, e) {
+            this.name = t, this.http = new s(this), this.data = null, this.dataFile = "box.dat", this.logs = [], this.isMute = !1, this.isNeedRewrite = !1, this.logSeparator = "\n", this.startTime = (new Date).getTime(), Object.assign(this, e), this.log("", `🔔${this.name}, 开始!`)
+        }
+
+        isNode() {
+            return "undefined" != typeof module && !!module.exports
+        }
+
+        isQuanX() {
+            return "undefined" != typeof $task
+        }
+
+        isSurge() {
+            return "undefined" != typeof $httpClient && "undefined" == typeof $loon
+        }
+
+        isLoon() {
+            return "undefined" != typeof $loon
+        }
+
+        toObj(t, e = null) {
+            try {
+                return JSON.parse(t)
+            } catch {
+                return e
+            }
+        }
+
+        toStr(t, e = null) {
+            try {
+                return JSON.stringify(t)
+            } catch {
+                return e
+            }
+        }
+
+        getjson(t, e) {
+            let s = e;
+            const i = this.getdata(t);
+            if (i) try {
+                s = JSON.parse(this.getdata(t))
+            } catch {
+            }
+            return s
+        }
+
+        setjson(t, e) {
+            try {
+                return this.setdata(JSON.stringify(t), e)
+            } catch {
+                return !1
+            }
+        }
+
+        getScript(t) {
+            return new Promise(e => {
+                this.get({url: t}, (t, s, i) => e(i))
+            })
+        }
+
+        runScript(t, e) {
+            return new Promise(s => {
+                let i = this.getdata("@chavy_boxjs_userCfgs.httpapi");
+                i = i ? i.replace(/\n/g, "").trim() : i;
+                let r = this.getdata("@chavy_boxjs_userCfgs.httpapi_timeout");
+                r = r ? 1 * r : 20, r = e && e.timeout ? e.timeout : r;
+                const [o, h] = i.split("@"), n = {
+                    url: `http://${h}/v1/scripting/evaluate`,
+                    body: {script_text: t, mock_type: "cron", timeout: r},
+                    headers: {"X-Key": o, Accept: "*/*"}
+                };
+                this.post(n, (t, e, i) => s(i))
+            }).catch(t => this.logErr(t))
+        }
+
+        loaddata() {
+            if (!this.isNode()) return {};
+            {
+                this.fs = this.fs ? this.fs : require("fs"), this.path = this.path ? this.path : require("path");
+                const t = this.path.resolve(this.dataFile), e = this.path.resolve(process.cwd(), this.dataFile),
+                    s = this.fs.existsSync(t), i = !s && this.fs.existsSync(e);
+                if (!s && !i) return {};
+                {
+                    const i = s ? t : e;
+                    try {
+                        return JSON.parse(this.fs.readFileSync(i))
+                    } catch (t) {
+                        return {}
+                    }
+                }
+            }
+        }
+
+        writedata() {
+            if (this.isNode()) {
+                this.fs = this.fs ? this.fs : require("fs"), this.path = this.path ? this.path : require("path");
+                const t = this.path.resolve(this.dataFile), e = this.path.resolve(process.cwd(), this.dataFile),
+                    s = this.fs.existsSync(t), i = !s && this.fs.existsSync(e), r = JSON.stringify(this.data);
+                s ? this.fs.writeFileSync(t, r) : i ? this.fs.writeFileSync(e, r) : this.fs.writeFileSync(t, r)
+            }
+        }
+
+        lodash_get(t, e, s) {
+            const i = e.replace(/\[(\d+)\]/g, ".$1").split(".");
+            let r = t;
+            for (const t of i) if (r = Object(r)[t], void 0 === r) return s;
+            return r
+        }
+
+        lodash_set(t, e, s) {
+            return Object(t) !== t ? t : (Array.isArray(e) || (e = e.toString().match(/[^.[\]]+/g) || []), e.slice(0, -1).reduce((t, s, i) => Object(t[s]) === t[s] ? t[s] : t[s] = Math.abs(e[i + 1]) >> 0 == +e[i + 1] ? [] : {}, t)[e[e.length - 1]] = s, t)
+        }
+
+        getdata(t) {
+            let e = this.getval(t);
+            if (/^@/.test(t)) {
+                const [, s, i] = /^@(.*?)\.(.*?)$/.exec(t), r = s ? this.getval(s) : "";
+                if (r) try {
+                    const t = JSON.parse(r);
+                    e = t ? this.lodash_get(t, i, "") : e
+                } catch (t) {
+                    e = ""
+                }
+            }
+            return e
+        }
+
+        setdata(t, e) {
+            let s = !1;
+            if (/^@/.test(e)) {
+                const [, i, r] = /^@(.*?)\.(.*?)$/.exec(e), o = this.getval(i),
+                    h = i ? "null" === o ? null : o || "{}" : "{}";
+                try {
+                    const e = JSON.parse(h);
+                    this.lodash_set(e, r, t), s = this.setval(JSON.stringify(e), i)
+                } catch (e) {
+                    const o = {};
+                    this.lodash_set(o, r, t), s = this.setval(JSON.stringify(o), i)
+                }
+            } else s = this.setval(t, e);
+            return s
+        }
+
+        getval(t) {
+            return this.isSurge() || this.isLoon() ? $persistentStore.read(t) : this.isQuanX() ? $prefs.valueForKey(t) : this.isNode() ? (this.data = this.loaddata(), this.data[t]) : this.data && this.data[t] || null
+        }
+
+        setval(t, e) {
+            return this.isSurge() || this.isLoon() ? $persistentStore.write(t, e) : this.isQuanX() ? $prefs.setValueForKey(t, e) : this.isNode() ? (this.data = this.loaddata(), this.data[e] = t, this.writedata(), !0) : this.data && this.data[e] || null
+        }
+
+        initGotEnv(t) {
+            this.got = this.got ? this.got : require("got"), this.cktough = this.cktough ? this.cktough : require("tough-cookie"), this.ckjar = this.ckjar ? this.ckjar : new this.cktough.CookieJar, t && (t.headers = t.headers ? t.headers : {}, void 0 === t.headers.Cookie && void 0 === t.cookieJar && (t.cookieJar = this.ckjar))
+        }
+
+        get(t, e = (() => {
+        })) {
+            t.headers && (delete t.headers["Content-Type"], delete t.headers["Content-Length"]), this.isSurge() || this.isLoon() ? (this.isSurge() && this.isNeedRewrite && (t.headers = t.headers || {}, Object.assign(t.headers, {"X-Surge-Skip-Scripting": !1})), $httpClient.get(t, (t, s, i) => {
+                !t && s && (s.body = i, s.statusCode = s.status), e(t, s, i)
+            })) : this.isQuanX() ? (this.isNeedRewrite && (t.opts = t.opts || {}, Object.assign(t.opts, {hints: !1})), $task.fetch(t).then(t => {
+                const {statusCode: s, statusCode: i, headers: r, body: o} = t;
+                e(null, {status: s, statusCode: i, headers: r, body: o}, o)
+            }, t => e(t))) : this.isNode() && (this.initGotEnv(t), this.got(t).on("redirect", (t, e) => {
+                try {
+                    if (t.headers["set-cookie"]) {
+                        const s = t.headers["set-cookie"].map(this.cktough.Cookie.parse).toString();
+                        s && this.ckjar.setCookieSync(s, null), e.cookieJar = this.ckjar
+                    }
+                } catch (t) {
+                    this.logErr(t)
+                }
+            }).then(t => {
+                const {statusCode: s, statusCode: i, headers: r, body: o} = t;
+                e(null, {status: s, statusCode: i, headers: r, body: o}, o)
+            }, t => {
+                const {message: s, response: i} = t;
+                e(s, i, i && i.body)
+            }))
+        }
+
+        post(t, e = (() => {
+        })) {
+            if (t.body && t.headers && !t.headers["Content-Type"] && (t.headers["Content-Type"] = "application/x-www-form-urlencoded"), t.headers && delete t.headers["Content-Length"], this.isSurge() || this.isLoon()) this.isSurge() && this.isNeedRewrite && (t.headers = t.headers || {}, Object.assign(t.headers, {"X-Surge-Skip-Scripting": !1})), $httpClient.post(t, (t, s, i) => {
+                !t && s && (s.body = i, s.statusCode = s.status), e(t, s, i)
+            }); else if (this.isQuanX()) t.method = "POST", this.isNeedRewrite && (t.opts = t.opts || {}, Object.assign(t.opts, {hints: !1})), $task.fetch(t).then(t => {
+                const {statusCode: s, statusCode: i, headers: r, body: o} = t;
+                e(null, {status: s, statusCode: i, headers: r, body: o}, o)
+            }, t => e(t)); else if (this.isNode()) {
+                this.initGotEnv(t);
+                const {url: s, ...i} = t;
+                this.got.post(s, i).then(t => {
+                    const {statusCode: s, statusCode: i, headers: r, body: o} = t;
+                    e(null, {status: s, statusCode: i, headers: r, body: o}, o)
+                }, t => {
+                    const {message: s, response: i} = t;
+                    e(s, i, i && i.body)
+                })
+            }
+        }
+
+        time(t, e = null) {
+            const s = e ? new Date(e) : new Date;
+            let i = {
+                "M+": s.getMonth() + 1,
+                "d+": s.getDate(),
+                "H+": s.getHours(),
+                "m+": s.getMinutes(),
+                "s+": s.getSeconds(),
+                "q+": Math.floor((s.getMonth() + 3) / 3),
+                S: s.getMilliseconds()
+            };
+            /(y+)/.test(t) && (t = t.replace(RegExp.$1, (s.getFullYear() + "").substr(4 - RegExp.$1.length)));
+            for (let e in i) new RegExp("(" + e + ")").test(t) && (t = t.replace(RegExp.$1, 1 == RegExp.$1.length ? i[e] : ("00" + i[e]).substr(("" + i[e]).length)));
+            return t
+        }
+
+        msg(e = t, s = "", i = "", r) {
+            const o = t => {
+                if (!t) return t;
+                if ("string" == typeof t) return this.isLoon() ? t : this.isQuanX() ? {"open-url": t} : this.isSurge() ? {url: t} : void 0;
+                if ("object" == typeof t) {
+                    if (this.isLoon()) {
+                        let e = t.openUrl || t.url || t["open-url"], s = t.mediaUrl || t["media-url"];
+                        return {openUrl: e, mediaUrl: s}
+                    }
+                    if (this.isQuanX()) {
+                        let e = t["open-url"] || t.url || t.openUrl, s = t["media-url"] || t.mediaUrl;
+                        return {"open-url": e, "media-url": s}
+                    }
+                    if (this.isSurge()) {
+                        let e = t.url || t.openUrl || t["open-url"];
+                        return {url: e}
+                    }
+                }
+            };
+            if (this.isMute || (this.isSurge() || this.isLoon() ? $notification.post(e, s, i, o(r)) : this.isQuanX() && $notify(e, s, i, o(r))), !this.isMuteLog) {
+                let t = ["", "==============📣系统通知📣=============="];
+                t.push(e), s && t.push(s), i && t.push(i), console.log(t.join("\n")), this.logs = this.logs.concat(t)
+            }
+        }
+
+        log(...t) {
+            t.length > 0 && (this.logs = [...this.logs, ...t]), console.log(t.join(this.logSeparator))
+        }
+
+        logErr(t, e) {
+            const s = !this.isSurge() && !this.isQuanX() && !this.isLoon();
+            s ? this.log("", `❗️${this.name}, 错误!`, t.stack) : this.log("", `❗️${this.name}, 错误!`, t)
+        }
+
+        wait(t) {
+            return new Promise(e => setTimeout(e, t))
+        }
+
+        done(t = {}) {
+            const e = (new Date).getTime(), s = (e - this.startTime) / 1e3;
+            this.log("", `🔔${this.name}, 结束! 🕛 ${s} 秒`), this.log(), (this.isSurge() || this.isQuanX() || this.isLoon()) && $done(t)
+        }
+    }(t, e)
+}
