@@ -19,6 +19,7 @@ ql repo https://github.com/gys619/jdd.git "jd_|jx_|jddj_|gua_|jddj_|getJDCookie|
 <summary>查看</summary>
 
 
+* 去掉多余的双十一红包脚本，自己再config里加export FLCODE=''，否则不能跑
 * 内部互助可以把code.sh和task_before.sh放config目录下，并添加一个code的定时任务，命令:task /ql/config/code.sh
 * 加KingRan大佬仓库
 * 最新面板2.9.7或者新版拉不到可以进入容器
