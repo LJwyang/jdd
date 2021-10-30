@@ -14,11 +14,18 @@ ql repo https://github.com/gys619/jdd.git "jd_|jx_|jddj_|gua_|jddj_|getJDCookie|
 [兜兜风评价助手1.6测试版](https://github.com/gys619/gys/blob/main/doudoufeng/%E5%85%9C%E5%85%9C%E9%A3%8E%E7%9A%84%E4%B8%9C%E4%BA%AC%E8%AF%84%E4%BB%B7%E5%8A%A9%E6%89%8B(%E6%B5%8B%E8%AF%95%E7%89%88)%201.7.exe?raw=true)
 
 [退会：JDMemberCloseAccount](https://github.com/yqchilde/JDMemberCloseAccount)
-### 更新日志
+### 脚本说明
 <details>
 <summary>查看</summary>
 
 
+* 想跑gua开卡的可以加,false改成true
+    ```
+    export guaopencard_All="false"
+    export guaopencard_addSku_All="false"
+    export guaopencardRun_All="false"
+    export guaopencard_draw="false"
+    ```
 * 去掉多余的双十一红包脚本，自己再config里加export FLCODE=''，否则不能跑
 * 内部互助可以把code.sh和task_before.sh放config目录下，并添加一个code的定时任务，命令:task /ql/config/code.sh
 * 加KingRan大佬仓库
